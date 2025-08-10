@@ -1,0 +1,341 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+    <title>Enhanced Chess Game</title>
+    <style>
+        .chessboard {
+            display: grid;
+            grid-template-columns: repeat(8, minmax(0, 1fr));
+            grid-template-rows: repeat(8, minmax(0, 1fr));
+            width: 480px;
+            height: 480px;
+            border: 4px solid #8B4513;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+            transform: rotate(0deg);
+            transition: transform 0.3s ease;
+        }
+
+        .flipped {
+            transform: rotate(180deg);
+        }
+
+        .square {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            width: 60px;
+            height: 60px;
+            transition: all 0.2s ease;
+        }
+
+        .square.light {
+            background-color: #f0d9b5;
+        }
+
+        .square.dark {
+            background-color: #b58863;
+        }
+
+        .square.highlight-last-move {
+            background-color: #fff59d !important;
+            box-shadow: inset 0 0 0 3px #ffc107;
+        }
+
+        .square.highlight-check {
+            background-color: #ffcdd2 !important;
+            box-shadow: inset 0 0 0 3px #f44336;
+        }
+
+        .piece {
+            font-size: 48px;
+            cursor: pointer;
+            user-select: none;
+            transition: transform 0.2s ease, opacity 0.2s ease;
+            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+        }
+
+        .piece.white {
+            color: #ffffff;
+            filter: drop-shadow(0 0 2px rgba(0, 0, 0, 0.8));
+        }
+
+        .piece.black {
+            color: #2c2c2c;
+            filter: drop-shadow(0 0 2px rgba(255, 255, 255, 0.3));
+        }
+
+        .piece.draggable {
+            cursor: grab;
+        }
+
+        .piece:hover.draggable {
+            transform: scale(1.1);
+        }
+
+        .dragging {
+            opacity: 0.7;
+            transform: scale(1.2);
+        }
+
+        .flipped .piece {
+            transform: rotate(180deg);
+        }
+
+        .flipped .piece:hover.draggable {
+            transform: rotate(180deg) scale(1.1);
+        }
+
+        .timer-bar {
+            height: 8px;
+            transition: width 1s linear;
+            background: linear-gradient(90deg, #4caf50 0%, #ffeb3b 50%, #f44336 100%);
+            border-radius: 4px;
+        }
+
+        .chat-container {
+            max-height: 300px;
+            overflow-y: auto;
+        }
+
+        .chat-message {
+            padding: 8px 12px;
+            margin: 4px 0;
+            border-radius: 8px;
+            word-wrap: break-word;
+        }
+
+        .chat-message.own {
+            background-color: #e3f2fd;
+            margin-left: 20px;
+        }
+
+        .chat-message.other {
+            background-color: #f5f5f5;
+            margin-right: 20px;
+        }
+
+        .captured-piece {
+            font-size: 24px;
+            margin: 2px;
+            padding: 4px;
+            border-radius: 4px;
+            background-color: rgba(0, 0, 0, 0.1);
+        }
+
+        .modal {
+            backdrop-filter: blur(5px);
+            animation: fadeIn 0.3s ease;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: scale(0.9); }
+            to { opacity: 1; transform: scale(1); }
+        }
+
+        .game-info-panel {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-radius: 16px;
+            padding: 20px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+        }
+
+        .player-card {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border-radius: 12px;
+            padding: 16px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .coordinate {
+            position: absolute;
+            font-size: 12px;
+            font-weight: bold;
+            color: #666;
+        }
+
+        .coord-file {
+            bottom: 2px;
+            right: 2px;
+        }
+
+        .coord-rank {
+            top: 2px;
+            left: 2px;
+        }
+
+        .player-identity {
+            background: rgba(255, 255, 255, 0.15);
+            backdrop-filter: blur(15px);
+            border-radius: 16px;
+            border: 2px solid rgba(255, 255, 255, 0.2);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+            animation: glow 2s ease-in-out infinite alternate;
+        }
+
+        @keyframes glow {
+            from { box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3); }
+            to { box-shadow: 0 8px 32px rgba(102, 126, 234, 0.4); }
+        }
+
+        .identity-white {
+            background: linear-gradient(135deg, rgba(255, 255, 255, 0.2) 0%, rgba(240, 240, 240, 0.1) 100%);
+            border-color: rgba(255, 255, 255, 0.4);
+        }
+
+        .identity-black {
+            background: linear-gradient(135deg, rgba(60, 60, 60, 0.3) 0%, rgba(30, 30, 30, 0.2) 100%);
+            border-color: rgba(100, 100, 100, 0.4);
+        }
+
+        .identity-spectator {
+            background: linear-gradient(135deg, rgba(102, 126, 234, 0.2) 0%, rgba(118, 75, 162, 0.2) 100%);
+            border-color: rgba(102, 126, 234, 0.4);
+        }
+    </style>
+</head>
+<body class="bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 min-h-screen">
+    
+    <!-- Player Name Modal -->
+    <div id="nameModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 modal">
+        <div class="bg-white rounded-lg p-8 max-w-md w-full mx-4 text-center">
+            <h2 class="text-2xl font-bold mb-4 text-gray-800">Enter Your Name</h2>
+            <input 
+                type="text" 
+                id="playerNameInput" 
+                placeholder="Your name" 
+                maxlength="20"
+                class="w-full px-4 py-2 border border-gray-300 rounded-lg mb-4 text-center text-lg"
+            >
+            <button 
+                id="submitName" 
+                class="bg-blue-500 hover:bg-blue-600 text-white px-6 py-2 rounded-lg font-semibold transition-colors"
+            >
+                Join Game
+            </button>
+        </div>
+    </div>
+
+    <!-- Game Over Modal -->
+    <div id="gameOverModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 modal hidden">
+        <div class="bg-white rounded-lg p-8 max-w-md w-full mx-4 text-center">
+            <div id="gameOverContent"></div>
+            <div class="flex gap-4 justify-center mt-6">
+                <button 
+                    id="newGameBtn" 
+                    class="bg-green-500 hover:bg-green-600 text-white px-6 py-2 rounded-lg font-semibold transition-colors"
+                >
+                    New Game
+                </button>
+                <button 
+                    id="closeGameOverBtn" 
+                    class="bg-gray-500 hover:bg-gray-600 text-white px-6 py-2 rounded-lg font-semibold transition-colors"
+                >
+                    Continue Watching
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <div class="container mx-auto px-4 py-8">
+        <div class="text-center mb-8">
+            <h1 class="text-4xl font-bold text-white mb-4">Enhanced Chess Game</h1>
+            
+            <!-- Player Identity Display -->
+            <div id="playerIdentity" class="player-identity inline-block px-6 py-3 mb-4">
+                <div class="text-white/70 text-sm mb-1">You are:</div>
+                <div id="playerIdentityText" class="text-white text-lg font-semibold">
+                    Connecting...
+                </div>
+            </div>
+            
+            <div id="gameStatus" class="text-xl text-gray-300"></div>
+        </div>
+
+        <div class="flex flex-col lg:flex-row gap-8 items-start justify-center">
+            <!-- Left Panel - Player Info & Captured Pieces -->
+            <div class="game-info-panel w-full lg:w-80">
+                <h3 class="text-white text-xl font-bold mb-4">Players</h3>
+                
+                <!-- White Player -->
+                <div class="player-card mb-4">
+                    <div class="flex items-center justify-between mb-2">
+                        <div class="flex items-center">
+                            <div class="w-4 h-4 bg-white rounded-full mr-2"></div>
+                            <span id="whitePlayerName" class="text-white font-semibold">White Player</span>
+                        </div>
+                        <div id="whiteTimer" class="text-white text-sm font-mono">60s</div>
+                    </div>
+                    <div id="whiteTimerBar" class="timer-bar w-full bg-gray-600 mb-2">
+                        <div class="h-full w-full rounded"></div>
+                    </div>
+                    <div class="text-white text-sm mb-2">Captured:</div>
+                    <div id="whiteCaptured" class="flex flex-wrap"></div>
+                </div>
+
+                <!-- Black Player -->
+                <div class="player-card">
+                    <div class="flex items-center justify-between mb-2">
+                        <div class="flex items-center">
+                            <div class="w-4 h-4 bg-gray-800 rounded-full mr-2"></div>
+                            <span id="blackPlayerName" class="text-white font-semibold">Black Player</span>
+                        </div>
+                        <div id="blackTimer" class="text-white text-sm font-mono">60s</div>
+                    </div>
+                    <div id="blackTimerBar" class="timer-bar w-full bg-gray-600 mb-2">
+                        <div class="h-full w-full rounded"></div>
+                    </div>
+                    <div class="text-white text-sm mb-2">Captured:</div>
+                    <div id="blackCaptured" class="flex flex-wrap"></div>
+                </div>
+            </div>
+
+            <!-- Center - Chess Board -->
+            <div class="flex flex-col items-center">
+                <div id="currentTurnIndicator" class="mb-4 text-2xl font-bold text-white"></div>
+                <div class="chessboard" id="chessboard"></div>
+                <div class="mt-4 text-center">
+                    <div id="gameInfo" class="text-white text-lg mb-2"></div>
+                    <button 
+                        id="newGameButton" 
+                        class="bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded-lg font-semibold transition-colors hidden"
+                    >
+                        New Game
+                    </button>
+                </div>
+            </div>
+
+            <!-- Right Panel - Chat -->
+            <div class="game-info-panel w-full lg:w-80">
+                <h3 class="text-white text-xl font-bold mb-4">Chat</h3>
+                <div class="chat-container bg-white rounded-lg p-3 mb-4" id="chatContainer">
+                    <div id="chatMessages"></div>
+                </div>
+                <div class="flex gap-2">
+                    <input 
+                        type="text" 
+                        id="chatInput" 
+                        placeholder="Type a message..." 
+                        maxlength="200"
+                        class="flex-1 px-3 py-2 rounded-lg border border-gray-300"
+                    >
+                    <button 
+                        id="sendChatBtn" 
+                        class="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-lg font-semibold transition-colors"
+                    >
+                        Send
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="/socket.io/socket.io.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/chess.js/0.10.3/chess.min.js"></script>
+    <script src="/js/chessgame.js"></script>
+</body>
+</html>
