@@ -22,11 +22,10 @@ let gameState = {
         black: []
     },
     moveTimer: null,
-    moveTimeLimit: 60000, // 60 seconds
+    moveTimeLimit: 60000, 
     currentTurnStartTime: null
 }
 
-// Store chat messages
 let chatMessages = []
 
 app.set("view engine", "ejs")
@@ -36,7 +35,6 @@ app.get('/', (req, res) => {
     res.render('index', { title: "Enhanced Chess Game" })
 })
 
-// Timer function to handle move timeout
 const startMoveTimer = () => {
     if (gameState.moveTimer) {
         clearTimeout(gameState.moveTimer)
@@ -60,7 +58,6 @@ const startMoveTimer = () => {
         }
     }, gameState.moveTimeLimit)
     
-    // Emit timer update to all clients
     io.emit("timerUpdate", {
         timeLimit: gameState.moveTimeLimit,
         startTime: gameState.currentTurnStartTime
@@ -104,7 +101,6 @@ const getPieceValue = (piece) => {
 io.on("connection", (uniquesocket) => {
     console.log("New connection:", uniquesocket.id)
     
-    // Send current chat messages to new connection
     uniquesocket.emit("chatHistory", chatMessages)
     
     uniquesocket.on("setPlayerName", (name) => {
@@ -123,7 +119,6 @@ io.on("connection", (uniquesocket) => {
             uniquesocket.emit("playerRole", "b")
             uniquesocket.emit("playerAssigned", { role: "black", name: name })
             
-            // Both players are now connected, start the game
             gameState.gameStarted = true
             io.emit("gameStarted", {
                 white: players.white.name,
@@ -134,7 +129,6 @@ io.on("connection", (uniquesocket) => {
             uniquesocket.emit("spectatorRole")
         }
         
-        // Broadcast current players to all clients
         io.emit("playersUpdate", {
             white: players.white?.name || null,
             black: players.black?.name || null
@@ -165,7 +159,6 @@ io.on("connection", (uniquesocket) => {
             })
         }
         
-        // Reset game if no players left
         if (!players.white && !players.black) {
             resetGame()
         }
@@ -185,14 +178,12 @@ io.on("connection", (uniquesocket) => {
             if (chess.turn() === "w" && uniquesocket.id !== players.white?.id) return
             if (chess.turn() === "b" && uniquesocket.id !== players.black?.id) return
 
-            // Store the piece at the target square before the move (for captures)
             const targetSquare = chess.get(move.to)
             
             const result = chess.move(move)
             if (result) {
                 stopMoveTimer()
                 
-                // Handle captured pieces
                 if (targetSquare) {
                     const capturedBy = result.color === 'w' ? 'white' : 'black'
                     gameState.capturedPieces[capturedBy].push({
@@ -211,7 +202,6 @@ io.on("connection", (uniquesocket) => {
                 
                 gameState.currentPlayer = chess.turn()
                 
-                // Check for game end conditions
                 if (chess.isGameOver()) {
                     gameState.gameEnded = true
                     
@@ -254,7 +244,6 @@ io.on("connection", (uniquesocket) => {
         }
     })
     
-    // Chat functionality
     uniquesocket.on("chatMessage", (data) => {
         const playerName = uniquesocket.id === players.white?.id ? players.white.name :
                           uniquesocket.id === players.black?.id ? players.black.name : "Spectator"
@@ -269,7 +258,6 @@ io.on("connection", (uniquesocket) => {
         
         chatMessages.push(chatMessage)
         
-        // Keep only last 50 messages
         if (chatMessages.length > 50) {
             chatMessages = chatMessages.slice(-50)
         }
@@ -277,7 +265,6 @@ io.on("connection", (uniquesocket) => {
         io.emit("chatMessage", chatMessage)
     })
     
-    // New game request
     uniquesocket.on("newGame", () => {
         if (uniquesocket.id === players.white?.id || uniquesocket.id === players.black?.id) {
             resetGame()
@@ -294,7 +281,6 @@ io.on("connection", (uniquesocket) => {
         }
     })
     
-    // Send current game state to new connections
     uniquesocket.emit("gameStateUpdate", {
         lastMove: gameState.lastMove,
         capturedPieces: gameState.capturedPieces,

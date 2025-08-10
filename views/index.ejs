@@ -200,7 +200,6 @@
 </head>
 <body class="bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 min-h-screen">
     
-    <!-- Player Name Modal -->
     <div id="nameModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 modal">
         <div class="bg-white rounded-lg p-8 max-w-md w-full mx-4 text-center">
             <h2 class="text-2xl font-bold mb-4 text-gray-800">Enter Your Name</h2>
@@ -220,7 +219,6 @@
         </div>
     </div>
 
-    <!-- Game Over Modal -->
     <div id="gameOverModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 modal hidden">
         <div class="bg-white rounded-lg p-8 max-w-md w-full mx-4 text-center">
             <div id="gameOverContent"></div>
@@ -245,7 +243,6 @@
         <div class="text-center mb-8">
             <h1 class="text-4xl font-bold text-white mb-4">Enhanced Chess Game</h1>
             
-            <!-- Player Identity Display -->
             <div id="playerIdentity" class="player-identity inline-block px-6 py-3 mb-4">
                 <div class="text-white/70 text-sm mb-1">You are:</div>
                 <div id="playerIdentityText" class="text-white text-lg font-semibold">
@@ -257,11 +254,9 @@
         </div>
 
         <div class="flex flex-col lg:flex-row gap-8 items-start justify-center">
-            <!-- Left Panel - Player Info & Captured Pieces -->
             <div class="game-info-panel w-full lg:w-80">
                 <h3 class="text-white text-xl font-bold mb-4">Players</h3>
                 
-                <!-- White Player -->
                 <div class="player-card mb-4">
                     <div class="flex items-center justify-between mb-2">
                         <div class="flex items-center">
@@ -277,7 +272,6 @@
                     <div id="whiteCaptured" class="flex flex-wrap"></div>
                 </div>
 
-                <!-- Black Player -->
                 <div class="player-card">
                     <div class="flex items-center justify-between mb-2">
                         <div class="flex items-center">
@@ -294,7 +288,6 @@
                 </div>
             </div>
 
-            <!-- Center - Chess Board -->
             <div class="flex flex-col items-center">
                 <div id="currentTurnIndicator" class="mb-4 text-2xl font-bold text-white"></div>
                 <div class="chessboard" id="chessboard"></div>
@@ -309,7 +302,6 @@
                 </div>
             </div>
 
-            <!-- Right Panel - Chat -->
             <div class="game-info-panel w-full lg:w-80">
                 <h3 class="text-white text-xl font-bold mb-4">Chat</h3>
                 <div class="chat-container bg-white rounded-lg p-3 mb-4" id="chatContainer">

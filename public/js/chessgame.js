@@ -27,12 +27,10 @@ let gameState = {
 let timerInterval = null
 let currentPlayerId = null
 
-// Update player identity display
 const updatePlayerIdentity = () => {
     const playerIdentityElement = document.getElementById("playerIdentity")
     const playerIdentityTextElement = document.getElementById("playerIdentityText")
     
-    // Remove existing identity classes
     playerIdentityElement.classList.remove("identity-white", "identity-black", "identity-spectator")
     
     if (playerRole === 'w') {
@@ -47,7 +45,6 @@ const updatePlayerIdentity = () => {
     }
 }
 
-// Timer management
 const updateTimerDisplay = (timeLeft, player) => {
     const timerElement = document.getElementById(`${player}Timer`)
     const timerBarElement = document.getElementById(`${player}TimerBar`).firstElementChild
@@ -91,7 +88,6 @@ const stopTimer = () => {
     }
 }
 
-// Name submission
 submitNameBtn.addEventListener("click", () => {
     const name = playerNameInput.value.trim()
     if (name) {
@@ -107,7 +103,6 @@ playerNameInput.addEventListener("keypress", (e) => {
     }
 })
 
-// Chat functionality
 const addChatMessage = (messageData) => {
     const messageElement = document.createElement("div")
     messageElement.classList.add("chat-message")
@@ -142,7 +137,6 @@ chatInput.addEventListener("keypress", (e) => {
     }
 })
 
-// New game functionality
 newGameButton.addEventListener("click", () => {
     socket.emit("newGame")
 })
@@ -156,7 +150,6 @@ closeGameOverBtn.addEventListener("click", () => {
     gameOverModal.classList.add("hidden")
 })
 
-// Board rendering
 const renderBoard = () => {
     const board = chess.board()
     boardElement.innerHTML = ""
@@ -172,7 +165,6 @@ const renderBoard = () => {
             squareElement.dataset.row = rowIndex
             squareElement.dataset.col = squareIndex
             
-            // Add coordinates
             if (squareIndex === 7 && playerRole !== 'b') {
                 const rankCoord = document.createElement("div")
                 rankCoord.classList.add("coordinate", "coord-rank")
@@ -187,7 +179,6 @@ const renderBoard = () => {
                 squareElement.appendChild(fileCoord)
             }
             
-            // Highlight last move
             if (gameState.lastMove) {
                 const squareNotation = `${String.fromCharCode(97 + squareIndex)}${8 - rowIndex}`
                 if (squareNotation === gameState.lastMove.from || squareNotation === gameState.lastMove.to) {
@@ -195,7 +186,6 @@ const renderBoard = () => {
                 }
             }
             
-            // Highlight check
             if (gameState.isCheck && square && square.type === 'k' && square.color === gameState.currentPlayer) {
                 squareElement.classList.add("highlight-check")
             }
@@ -353,7 +343,6 @@ const showGameOverModal = (data) => {
     gameOverModal.classList.remove("hidden")
 }
 
-// Socket event listeners
 socket.on("playerRole", (role) => {
     playerRole = role
     currentPlayerId = socket.id
@@ -443,11 +432,9 @@ socket.on("invalidMove", (move) => {
     console.log("Invalid move attempted:", move)
 })
 
-// Initialize the game
 renderBoard()
 updateGameStatus()
 
-// Focus on name input when page loads
 setTimeout(() => {
     playerNameInput.focus()
 }, 100)
